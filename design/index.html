@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>技术新闻聚合</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231a1a2e' stroke-width='2'><path d='M4 11a9 9 0 0 1 9 9'/><path d='M4 4a16 16 0 0 1 16 16'/><circle cx='5' cy='19' r='1'/></svg>">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: #f5f6fa;
+      color: #1a1a2e;
+      line-height: 1.6;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Header */
+    header {
+      background: #fff;
+      border-bottom: 1px solid #eee;
+      padding: 14px 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .container {
+      max-width: 860px;
+      margin: 0 auto;
+      padding: 0 24px;
+      width: 100%;
+    }
+
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-size: 17px;
+      font-weight: 600;
+      color: #1a1a2e;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .logo svg { width: 18px; height: 18px; color: #555; }
+
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      background: #1a1a2e;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover { background: #2d2d44; }
+    .refresh-btn.loading { opacity: 0.7; }
+
+    .refresh-btn svg { width: 14px; height: 14px; }
+
+    .refresh-btn.loading svg {
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Main Content */
+    main.container {
+      flex: 1;
+      padding: 24px;
+    }
+
+    /* Tabs */
+    .tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .tab {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 13px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #666;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .tab:hover { border-color: #1a1a2e; color: #1a1a2e; }
+    .tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .tab-count { opacity: 0.55; font-size: 12px; }
+    .tab.active .tab-count { opacity: 0.75; }
+
+    /* News List */
+    .news-list { display: none; flex-direction: column; gap: 8px; }
+    .news-list.active { display: flex; }
+
+    .news-card {
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 14px 18px;
+      transition: box-shadow 0.2s, border-color 0.2s, transform 0.2s;
+    }
+
+    .news-card:hover {
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      border-color: #ccc;
+      transform: translateY(-1px);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .card-source {
+      font-size: 11px;
+      font-weight: 600;
+      color: #1a1a2e;
+      letter-spacing: 0.3px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .source-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .card-time {
+      font-size: 11px;
+      color: #999;
+    }
+
+    .card-title {
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.45;
+      margin-bottom: 5px;
+    }
+
+    .card-title a {
+      color: #1a1a2e;
+      text-decoration: none;
+      transition: color 0.15s;
+    }
+
+    .card-title a:hover { color: #555; }
+
+    .card-summary {
+      font-size: 13px;
+      color: #666;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* Footer */
+    footer.container {
+      margin: 24px;
+      text-align: center;
+      color: #ccc;
+      font-size: 12px;
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="container header-inner">
+      <div class="logo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 11a9 9 0 0 1 9 9"/>
+          <path d="M4 4a16 16 0 0 1 16 16"/>
+          <circle cx="5" cy="19" r="1"/>
+        </svg>
+        <span>技术新闻</span>
+      </div>
+      <button class="refresh-btn" id="refreshBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+          <path d="M16 16h5v5"/>
+        </svg>
+        <span>刷新</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="container">
+    <nav class="tabs">
+      <button class="tab active" data-channel="AI">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2a8 8 0 0 1 8 8c0 2.5-1.5 5-3 6.5V18a2 2 0 0 1-2 2h-6a2 2 0 0 1-2-2v-1.5C5.5 15 4 12.5 4 10a8 8 0 0 1 8-8z"/>
+          <path d="M9 22h6"/>
+          <path d="M12 18v4"/>
+        </svg>
+        AI 频道 <span class="tab-count">10</span>
+      </button>
+      <button class="tab" data-channel="frontend">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="16 18 22 12 16 6"/>
+          <polyline points="8 6 2 12 8 18"/>
+        </svg>
+        前端频道 <span class="tab-count">4</span>
+      </button>
+    </nav>
+
+    <section class="news-list active" id="aiNews">
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#f0652f"></span>Hacker News</span>
+          <span class="card-time">30分钟前</span>
+        </div>
+        <h2 class="card-title"><a href="#">OpenAI 发布 GPT-5：实现真正的多步推理与长期记忆</a></h2>
+        <p class="card-summary">GPT-5 在复杂推理任务上大幅超越 GPT-4o，支持 128K 上下文窗口，并首次实现了跨会话的长期记忆能力。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#7c3aed"></span>Anthropic Blog</span>
+          <span class="card-time">1小时前</span>
+        </div>
+        <h2 class="card-title"><a href="#">Claude 4.7 发布：200K 上下文窗口与跨文档理解</a></h2>
+        <p class="card-summary">Claude 4.7 系列模型在 MMLU 基准上达到 92.3%，首次实现真正的跨文档理解与复杂推理能力。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#1e90ff"></span>The Verge</span>
+          <span class="card-time">2小时前</span>
+        </div>
+        <h2 class="card-title"><a href="#">Google Gemini 2.0 发布：原生多模态与 Agent 能力</a></h2>
+        <p class="card-summary">Gemini 2.0 支持原生代码执行、实时音视频交互，并开放了 Agent 模式的 API 接口。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#da552f"></span>Product Hunt</span>
+          <span class="card-time">3小时前</span>
+        </div>
+        <h2 class="card-title"><a href="#">Vercel v0.9 发布：AI 原生前端开发范式</a></h2>
+        <p class="card-summary">集成 Claude Code API，开发者可通过自然语言描述生成完整 Next.js 项目，支持实时协作编辑。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#0a0"></span>TechCrunch</span>
+          <span class="card-time">5小时前</span>
+        </div>
+        <h2 class="card-title"><a href="#">Mistral AI 发布开源模型 Mixtral 8x22B</a></h2>
+        <p class="card-summary">Mixtral 8x22B 拥有 141B 参数，支持 128K 上下文，在多项基准上超越 GPT-3.5。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#b31b1b"></span>arXiv</span>
+          <span class="card-time">昨天</span>
+        </div>
+        <h2 class="card-title"><a href="#">斯坦福研究：AI 模型在代码生成质量上超越人类初级工程师</a></h2>
+        <p class="card-summary">研究显示 GPT-4 在 SWE-bench 基准测试中解决真实 GitHub 问题的能力超过 50% 的人类工程师。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#333"></span>dev.to</span>
+          <span class="card-time">昨天</span>
+        </div>
+        <h2 class="card-title"><a href="#">TypeScript 6.0 Beta：独立类型推断引擎与模式匹配</a></h2>
+        <p class="card-summary">类型检查速度提升 3 倍，支持更好的泛型字面量推断，大幅改善开发体验。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#0d9488"></span>VentureBeat</span>
+          <span class="card-time">昨天</span>
+        </div>
+        <h2 class="card-title"><a href="#">Meta 开源 Llama 3：性能全面超越 GPT-4</a></h2>
+        <p class="card-summary">Llama 3 8B 在 MMLU 达到 82%，70B 版本在多项基准上与 GPT-4 持平，完全开源可商用。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#000"></span>Wired</span>
+          <span class="card-time">2天前</span>
+        </div>
+        <h2 class="card-title"><a href="#">Runway 发布 Gen-3：10秒生成好莱坞级视频</a></h2>
+        <p class="card-summary">Gen-3 支持角色一致性和复杂场景编排，视频生成质量首次接近专业影视制作水准。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#0066cc"></span>IEEE Spectrum</span>
+          <span class="card-time">2天前</span>
+        </div>
+        <h2 class="card-title"><a href="#">AI 编译器新突破：自动优化神经网络推理效率提升 40%</a></h2>
+        <p class="card-summary">MIT 研究团队开发的 AI 编译器可自动优化模型推理，在保持精度的同时大幅提升效率。</p>
+      </article>
+    </section>
+
+    <section class="news-list" id="feNews">
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#00bcd4"></span>React Blog</span>
+          <span class="card-time">昨天</span>
+        </div>
+        <h2 class="card-title"><a href="#">React 21 RC：编译器驱动的自动化优化</a></h2>
+        <p class="card-summary">开发者无需手动使用 memo、useMemo，编译器自动分析并插入最优化的缓存策略。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#e91e63"></span>CSS Tricks</span>
+          <span class="card-time">2天前</span>
+        </div>
+        <h2 class="card-title"><a href="#">容器查询与 @layer 规则获主流浏览器全覆盖</a></h2>
+        <p class="card-summary">Chrome、Firefox、Safari 全部支持，响应式设计进入新纪元。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#42b883"></span>Vue Blog</span>
+          <span class="card-time">3天前</span>
+        </div>
+        <h2 class="card-title"><a href="#">Vue 3.5 将引入新的响应式系统与更好的 TypeScript 支持</a></h2>
+        <p class="card-summary">基于 Proxy 的响应式系统将带来更好的性能与更小的打包体积。</p>
+      </article>
+
+      <article class="news-card">
+        <div class="card-header">
+          <span class="card-source"><span class="source-dot" style="background:#4285f4"></span>web.dev</span>
+          <span class="card-time">3天前</span>
+        </div>
+        <h2 class="card-title"><a href="#">Chrome 120 发布：CSS 嵌套、原生对话框与新 API</a></h2>
+        <p class="card-summary">原生 CSS 嵌套支持、popover 属性与 View Transitions API 正式可用。</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="container">
+    <p>技术新闻聚合 · 2026</p>
+  </footer>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const aiNews = document.getElementById('aiNews');
+    const feNews = document.getElementById('feNews');
+    const refreshBtn = document.getElementById('refreshBtn');
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        if (tab.dataset.channel === 'AI') {
+          aiNews.classList.add('active');
+          feNews.classList.remove('active');
+        } else {
+          feNews.classList.add('active');
+          aiNews.classList.remove('active');
+        }
+      });
+    });
+
+    refreshBtn.addEventListener('click', () => {
+      refreshBtn.classList.add('loading');
+      setTimeout(() => refreshBtn.classList.remove('loading'), 1200);
+    });
+  </script>
+</body>
+</html>
